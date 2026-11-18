@@ -64,7 +64,7 @@ pipeline {
 
         stage('Build Docker image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE:latest .'
+                sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER -t $DOCKER_IMAGE:latest .'
             }
         }
 
@@ -75,7 +75,8 @@ pipeline {
                                                   passwordVariable: 'DH_PASS')]) {
                     sh '''
                         echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
-                        docker push $DOCKER_IMAGE:latest     # replaces the previous :latest on Docker Hub
+                        docker push $DOCKER_IMAGE:$BUILD_NUMBER   # new unique tag for this build
+                        docker push $DOCKER_IMAGE:latest          # latest always points to the newest build
                         docker logout
                     '''
                 }
@@ -85,9 +86,9 @@ pipeline {
         stage('Deploy on EC2') {
             steps {
                 sh '''
-                    docker pull $DOCKER_IMAGE:latest
+                    docker pull $DOCKER_IMAGE:$BUILD_NUMBER
                     docker rm -f $CONTAINER || true
-                    docker run -d --name $CONTAINER --restart always -p 8000:8000 $DOCKER_IMAGE:latest
+                    docker run -d --name $CONTAINER --restart always -p 8000:8000 $DOCKER_IMAGE:$BUILD_NUMBER
 
                     # wait until the new API answers
                     for i in $(seq 1 30); do
@@ -116,7 +117,7 @@ Result: ${currentBuild.currentResult}
 Commit: ${env.COMMIT_SHA} by ${env.COMMITTER_EMAIL}
 
 New data was pushed to GitHub, the model was retrained, pushed to Docker Hub
-(${env.DOCKER_IMAGE}:latest) and redeployed on AWS EC2.
+(${env.DOCKER_IMAGE}:${env.BUILD_NUMBER}) and redeployed on AWS EC2.
 
 Metrics:
 ${metrics}
