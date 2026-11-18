@@ -15,7 +15,7 @@ pipeline {
         IMAGE      = 'midterm-model'
         CONTAINER  = 'midterm-api'
         VENV       = '/var/lib/jenkins/midterm-venv'
-        NOTIFY_TO  = 'qasimalik@gmail.com'
+        NOTIFY_TO  = 'ahmedrehman47555@gmail.com'
         SENDER     = 'ahmedrehman47555@gmail.com'
     }
 
